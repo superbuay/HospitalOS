@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="OPD_Card_con" pageWidth="595" pageHeight="765" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="edf8569a-d067-400d-8071-b02141e556a0">
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="174"/>
+	<property name="ireport.y" value="586"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="patient_id" class="java.lang.String"/>
+	<parameter name="printer_id" class="java.lang.String" isForPrompting="false"/>
+	<queryString>
+		<![CDATA[select
+	    t_patient.patient_birthday as birthdate
+    ,f_patient_prefix.patient_prefix_description
+     || ' ' || t_patient.patient_firstname
+     || ' ' || t_patient.patient_lastname as name
+    ,t_patient.patient_community_status                 AS community_status
+    ,t_patient.patient_hn as hn
+    ,t_patient.patient_house
+     || ' หมู่ ' || t_patient.patient_moo
+     || ' ถนน' || t_patient.patient_road
+     || ' ตำบล' || tambon.address_description
+     || ' อำเภอ' || amphur.address_description
+     || ' จังหวัด' || changwat.address_description as address
+    ,t_patient.patient_phone_number as telephonenumber
+	,t_patient.patient_patient_mobile_phone as mobilenumber
+    ,t_patient.patient_father_firstname
+     || ' ' || t_patient.patient_father_lastname as fathername
+    ,t_patient.patient_mother_firstname
+     || ' ' || t_patient.patient_mother_lastname as mothername
+     ,t_patient.patient_update_date_time as date
+
+from t_patient
+
+        left join f_patient_prefix on t_patient.f_patient_prefix_id = f_patient_prefix.f_patient_prefix_id
+        left join (select * from f_address) as changwat on changwat.f_address_id = t_patient.patient_changwat
+        left join (select * from f_address) as amphur on amphur.f_address_id = t_patient.patient_amphur
+        left join (select * from f_address) as tambon on tambon.f_address_id = t_patient.patient_tambon
+        left join (select * from f_address) as changwat_ct on changwat_ct.f_address_id = t_patient.patient_changwat
+        left join (select * from f_address) as amphur_ct on amphur_ct.f_address_id = t_patient.patient_amphur
+        left join (select * from f_address) as tambon_ct on tambon_ct.f_address_id = t_patient.patient_tambon
+        left join t_patient_personal_disease on t_patient_personal_disease.t_patient_id = t_patient.t_patient_id
+        left join f_patient_relation on f_patient_relation.f_patient_relation_id = t_patient.f_patient_relation_id
+        left join b_employee on t_patient.patient_staff_record = b_employee.b_employee_id and b_employee.employee_active='1'
+
+where t_patient.t_patient_id = $P{patient_id}]]>
+	</queryString>
+	<field name="birthdate" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="community_status" class="java.lang.String"/>
+	<field name="hn" class="java.lang.String"/>
+	<field name="address" class="java.lang.String"/>
+	<field name="telephonenumber" class="java.lang.String"/>
+	<field name="fathername" class="java.lang.String"/>
+	<field name="mothername" class="java.lang.String"/>
+	<field name="date" class="java.lang.String"/>
+	<field name="mobilenumber" class="java.lang.String"/>
+	<background>
+		<band height="574" splitType="Stretch">
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="fcfeaf1b-a0df-4af0-8304-eaed04b148f2" key="textField" mode="Transparent" x="305" y="417" width="65" height="24" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Bottom" rotation="None">
+					<font fontName="TH SarabunPSK" size="18" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="CP1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[com.hospital_os.utility.DateUtil
+.calculateAge($F{birthdate})]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement uuid="7141e8e5-c6f1-4476-ac4d-b34559c0b466" key="textField" mode="Transparent" x="60" y="441" width="214" height="54" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None">
+					<font fontName="TH SarabunPSK" size="18" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="CP1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{address}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="77e61a0f-5930-4daf-ac36-0bd65c581d50" x="377" y="464" width="209" height="23"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="TH SarabunPSK" size="18"/>
+				</textElement>
+				<textFieldExpression><![CDATA["โทร: "+$F{telephonenumber}+", "+$F{mobilenumber}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="794a45f0-3a0a-4913-98e1-e067914565d4" key="textField" mode="Transparent" x="58" y="417" width="226" height="24" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Bottom" rotation="None">
+					<font fontName="TH SarabunPSK" size="20" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="CP1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="339eaa07-1fcd-4b19-ab17-427906a0dab3" x="351" y="441" width="123" height="23"/>
+				<textElement>
+					<font fontName="TH SarabunPSK" size="18"/>
+				</textElement>
+				<textFieldExpression><![CDATA["วันเกิด "+$F{birthdate}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="741280ff-cd54-4353-ae5a-f0f88ab34e69" key="textField" mode="Transparent" x="450" y="384" width="133" height="42" forecolor="#000000" backcolor="#FFFFFF"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#FFFFFF"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Bottom" rotation="None">
+					<font fontName="TH SarabunPSK" size="32" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="CP1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{hn}]]></textFieldExpression>
+			</textField>
+		</band>
+	</background>
+	<title>
+		<band splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band splitType="Stretch"/>
+	</detail>
+	<columnFooter>
+		<band splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

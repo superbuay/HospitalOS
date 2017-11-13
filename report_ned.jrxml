@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report_ned" language="groovy" pageWidth="421" pageHeight="595" columnWidth="381" leftMargin="20" rightMargin="20" topMargin="28" bottomMargin="28" uuid="7357b4c1-0765-4b75-92f7-0b20c894fc40">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="432"/>
+	<parameter name="visit_id" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select
+        b_site.site_full_name as hospital
+        , b_site.site_house
+           || case when b_site.site_moo <>'' then ' ม.'||b_site.site_moo else '' end
+           || case when b_site.site_tambon <>'' then ' ต.'||tambon.address_description else '' end
+           || case when b_site.site_amphur <>'' then ' อ.'||amphur.address_description else '' end
+           || case when b_site.site_changwat <>'' then ' จ.'||changwat.address_description else '' end
+          as hospital_address
+        ,b_site.site_phone_number as site_phone_number
+        ,t_patient.patient_hn as hn
+        ,f_patient_prefix.patient_prefix_description||t_patient.patient_firstname||'   '||t_patient.patient_lastname as name
+        ,t_visit.visit_vn as vn
+        ,f_visit_type.visit_type_description as visit_type
+
+
+        ,t_order.order_common_name as  order_common_name
+        ,case when t_order_ned.f_ned_reason_id = '0' then '999' else t_order_ned.f_ned_reason_id end as ned_reason_id
+        ,'- '||case when t_order_ned.f_ned_reason_id = '0' then t_order_ned.other_reason else f_ned_reason.description end as ned_reason
+        ,prefix_doc.patient_prefix_description || t_person.person_firstname||'  '||t_person.person_lastname as doctor
+        ,t_order.date_time as orderdate
+        ,t_order.order_qty as order_qty
+        ,t_order.order_price as order_price
+        ,t_order.price as price
+
+
+from
+           ( select distinct
+                        t_order.b_item_id  as b_item_id
+                        ,t_order_ned.f_ned_reason_id as f_ned_reason_id
+                        ,t_order_ned.other_reason as other_reason
+                        ,t_order_ned.user_record_id
+
+            from t_order_ned left join t_order on t_order_ned.t_order_id = t_order.t_order_id
+            where
+                           t_order.t_visit_id = $P{visit_id}
+                           --t_order.t_visit_id = '255288501072361577'
+                           and t_order.f_order_status_id not in ('0','3')) as t_order_ned
+        inner join
+        (select
+                        t_order.b_item_id as b_item_id
+                        ,t_order.t_visit_id as t_visit_id
+                        ,t_order.order_common_name as order_common_name
+                        ,substr(t_order.order_date_time,1,10) as date_time
+                        ,sum(t_order.order_qty) as order_qty
+                        ,t_order.order_price as order_price
+                        ,sum(ceil(t_order.order_qty*t_order.order_price)) as price
+        from t_order
+        where
+                   t_order.t_visit_id = $P{visit_id}
+                   --t_order.t_visit_id = '255288501072361577'
+               and t_order.f_order_status_id not in ('0','3')
+
+        group by
+                b_item_id
+                ,t_visit_id
+                ,order_common_name
+                ,date_time
+                ,order_price) as t_order
+        on t_order_ned.b_item_id = t_order.b_item_id
+
+        inner join t_visit on t_order.t_visit_id = t_visit.t_visit_id
+        inner join t_patient on t_visit.t_patient_id = t_patient.t_patient_id
+        left join f_ned_reason on t_order_ned.f_ned_reason_id = f_ned_reason.f_ned_reason_id
+        left join f_patient_prefix on t_patient.f_patient_prefix_id = f_patient_prefix.f_patient_prefix_id
+        left join f_visit_type on t_visit.f_visit_type_id = f_visit_type.f_visit_type_id
+        left join b_employee as doctor on t_order_ned.user_record_id = doctor.b_employee_id
+        left join t_person on t_person.t_person_id = doctor.t_person_id
+        left join f_patient_prefix as prefix_doc on prefix_doc.f_patient_prefix_id = t_person.f_prefix_id
+        cross join b_site
+        left join f_address as changwat on changwat.f_address_id = b_site.site_changwat
+        left join f_address as amphur on amphur.f_address_id = b_site.site_amphur
+        left join f_address as tambon on tambon.f_address_id = b_site.site_tambon
+
+where
+        t_order.t_visit_id = $P{visit_id}
+        --t_order.t_visit_id = '255288501072361577'
+
+order by
+        t_order.order_common_name asc
+        ,ned_reason_id asc]]>
+	</queryString>
+	<field name="hospital" class="java.lang.String"/>
+	<field name="hospital_address" class="java.lang.String"/>
+	<field name="site_phone_number" class="java.lang.String"/>
+	<field name="hn" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="vn" class="java.lang.String"/>
+	<field name="visit_type" class="java.lang.String"/>
+	<field name="order_common_name" class="java.lang.String"/>
+	<field name="ned_reason_id" class="java.lang.String"/>
+	<field name="ned_reason" class="java.lang.String"/>
+	<field name="doctor" class="java.lang.String"/>
+	<field name="orderdate" class="java.lang.String"/>
+	<field name="order_qty" class="java.lang.Double"/>
+	<field name="order_price" class="java.lang.Double"/>
+	<field name="price" class="java.lang.Double"/>
+	<variable name="sum_price" class="java.lang.Double" incrementType="Group" incrementGroup="order_common_name" calculation="Sum">
+		<variableExpression><![CDATA[$F{price}]]></variableExpression>
+	</variable>
+	<variable name="count_order" class="java.lang.Integer" incrementType="Group" incrementGroup="order_common_name" calculation="Count">
+		<variableExpression><![CDATA[$F{order_common_name}]]></variableExpression>
+	</variable>
+	<group name="order_common_name">
+		<groupExpression><![CDATA[$F{order_common_name}]]></groupExpression>
+		<groupHeader>
+			<band height="39">
+				<textField>
+					<reportElement uuid="808852c5-bfc6-4e43-b15e-7678ff434ea8" x="20" y="0" width="360" height="20"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="TH SarabunPSK" size="16" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{order_common_name}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.">
+					<reportElement uuid="927eac8d-9a0e-4ba8-8dd7-8a3c4624edd3" x="0" y="0" width="18" height="20"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="TH SarabunPSK" size="16" isBold="true"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{count_order}.equals(null)? "1." :$V{count_order}+1]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="1bdf8034-fdca-4c18-a47b-08ee805f4f28" x="20" y="19" width="272" height="20"/>
+					<textElement>
+						<font fontName="TH SarabunPSK" size="16"/>
+					</textElement>
+					<text><![CDATA[เหตุผลที่ไม่สามารถใช้ยาในบัญชียาหลักแห่งชาติ]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="20">
+				<staticText>
+					<reportElement uuid="7c1fed90-09f5-4e40-80f2-7b0f5187efa8" x="197" y="0" width="32" height="20"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="TH SarabunPSK" size="16"/>
+					</textElement>
+					<text><![CDATA[จำนวน]]></text>
+				</staticText>
+				<textField pattern="#,##0">
+					<reportElement uuid="36af628a-d9a4-4592-a28e-9cc051cdb5bc" x="230" y="0" width="29" height="20"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="TH SarabunPSK" size="16"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{order_qty}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="0dce545e-259e-4b69-aa21-b4d5d904e64e" x="266" y="0" width="26" height="20"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="TH SarabunPSK" size="16"/>
+					</textElement>
+					<text><![CDATA[ราคา]]></text>
+				</staticText>
+				<textField pattern="#,##0.00">
+					<reportElement uuid="75a51a85-9196-4a51-ad05-6d55ac7f85b5" x="293" y="0" width="57" height="20"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="TH SarabunPSK" size="16"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{price}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="df02f9a2-1f08-4159-93d5-d3fbec7a4d9f" x="355" y="0" width="26" height="20"/>
+					<textElement>
+						<font fontName="TH SarabunPSK" size="16"/>
+					</textElement>
+					<text><![CDATA[บาท]]></text>
+				</staticText>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band height="539" splitType="Stretch">
+			<staticText>
+				<reportElement uuid="58c574b3-4191-4bc8-b813-11b29620a37f" x="0" y="0" width="381" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="18" isBold="true"/>
+				</textElement>
+				<text><![CDATA[หนังสือรับรองประกอบการเบิกจ่ายยานอกบัญชียาหลักแห่งชาติ]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="7f90a799-3bbb-4427-9d76-ec42ca33daec" x="0" y="21" width="381" height="22"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["คณะกรรมการการแพทย์ " + $F{hospital}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="2ae6d776-6996-47fd-a8e6-93ce4aa8fc02" x="0" y="42" width="381" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{hospital_address}]]></textFieldExpression>
+			</textField>
+		</band>
+	</background>
+	<title>
+		<band height="145">
+			<staticText>
+				<reportElement uuid="bd1ff945-dd6e-4523-bf77-44c50f707600" x="14" y="61" width="59" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<text><![CDATA[ด้วยผู้ป่วยชื่อ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="9da6a644-3169-4d2e-b8d8-b6bc105dfc8e" x="72" y="61" width="153" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="8437250d-eb92-4e0e-b007-1a5040271baa" x="226" y="61" width="23" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<text><![CDATA[HN :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="e237f551-99fb-4d87-9350-be655ca2ac93" x="248" y="61" width="55" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{hn}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="818d68bb-c916-49a4-a437-5d0d8ecfa502" x="0" y="80" width="82" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<text><![CDATA[มารับการรักษาใน]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="09bd87a1-72b9-4a26-aff4-6318ae55f6ff" x="81" y="80" width="177" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{hospital}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="28913a6b-2de1-4c1a-9475-f977733a26d5" x="257" y="80" width="124" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA["ประเภท " +$F{visit_type}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="da1fd6f7-5671-452c-bc03-0478adb784eb" x="0" y="99" width="63" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<text><![CDATA[จากแพทย์ชื่อ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="9ec3c908-1857-4e97-abda-4ee367160eb3" x="60" y="99" width="199" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{doctor}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="96d370ae-ab63-4d11-a006-4308ca00495d" x="258" y="99" width="123" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA["วันที่ "+
+com.hospital_os.utility.DateUtil.getDateToString(
+com.hospital_os.utility.DateUtil.getDateFromText(
+$F{orderdate}),false)]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="3ffb1ee0-5e7e-408c-b4ff-cfc5bbaab874" x="0" y="118" width="296" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<text><![CDATA[มีความจำเป็นต้องใช้ยานอกบัญชียาหลักแห่งชาติ ตามรายการดังนี้]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="4360af3a-6ad0-4864-9015-ecce50a36493" x="305" y="61" width="23" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<text><![CDATA[VN :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="b61aa605-8be7-48fc-bba2-27de6e3c72bd" x="327" y="61" width="55" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vn}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="70" splitType="Stretch">
+			<printWhenExpression><![CDATA[$V{PAGE_NUMBER}.equals(1)? false : true]]></printWhenExpression>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="20">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="a5c77ea0-5b1f-4473-890e-c93fde135f06" x="42" y="0" width="338" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ned_reason}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<lastPageFooter>
+		<band height="94">
+			<textField pattern="#,##0.00">
+				<reportElement uuid="3e845f3d-802c-4418-b6ea-e3f61eae2e8a" x="274" y="2" width="74" height="20"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{sum_price}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="5c1a9053-f5a3-4920-9e3d-a15429de892d" x="230" y="2" width="43" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16" isBold="true"/>
+				</textElement>
+				<text><![CDATA[มูลค่ารวม]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="ca23f3f0-6f27-4dd5-8f60-3129eed20748" x="42" y="2" width="35" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16" isBold="true"/>
+				</textElement>
+				<text><![CDATA[จำนวน]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="9e5ae928-9e03-4303-a28b-3ad30de0a832" x="121" y="2" width="36" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16" isBold="true"/>
+				</textElement>
+				<text><![CDATA[รายการ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="54e318ba-eea2-447b-82f6-3c4602d14213" x="353" y="2" width="26" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16" isBold="true"/>
+				</textElement>
+				<text><![CDATA[บาท]]></text>
+			</staticText>
+			<textField pattern="#,##0">
+				<reportElement uuid="caf44fd5-58dc-4bca-b298-312fbd40265f" x="77" y="2" width="44" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{count_order}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement uuid="83af3fd6-1bd8-40cf-be37-1a1b33fdcb1a" x="0" y="1" width="381" height="1"/>
+			</line>
+			<staticText>
+				<reportElement uuid="200210c3-3e17-495e-8db3-9b68889f35e1" x="145" y="32" width="235" height="20"/>
+				<textElement textAlignment="Center">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<text><![CDATA[ลงชื่อ.......................................................แพทย์ผู้สั่งยา]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="94292a5f-f629-42d3-a235-31411430b670" x="145" y="52" width="210" height="20"/>
+				<textElement textAlignment="Center">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{doctor}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd MMMMM yyyy">
+				<reportElement uuid="d84147fc-2ff0-4503-b876-19b6f82be9e1" x="145" y="72" width="210" height="20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="TH SarabunPSK" size="16"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.text.SimpleDateFormat("dd MMMM yyyy", new java.util.Locale("th", "TH")).format(new Date())]]></textFieldExpression>
+			</textField>
+		</band>
+	</lastPageFooter>
+</jasperReport>
